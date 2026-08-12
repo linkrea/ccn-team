@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="云计算及算力网络 - 后台管理系统">
+  <title>后台管理 | 云计算及算力网络</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/admin.css">
+</head>
+<body>
+
+  <!-- ===== 登录页 ===== -->
+  <div class="admin-login" id="login-page">
+    <div class="login-box">
+      <div class="login-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+        </svg>
+      </div>
+      <h1>后台管理系统</h1>
+      <p>云计算及算力网络 · 内容管理平台</p>
+      <div class="login-error" id="login-error">密码错误，请重试</div>
+      <input type="password" id="login-password" placeholder="请输入管理密码" autocomplete="off">
+      <button class="btn-admin btn-admin-primary" style="width:100%;justify-content:center;padding:12px;" onclick="AdminApp.handleLogin()">
+        登录
+      </button>
+      <div class="login-hint"></div>
+    </div>
+  </div>
+
+  <!-- ===== 管理后台 ===== -->
+  <div class="admin-body" id="admin-app" style="display:none;">
+
+    <!-- 顶部栏 -->
+    <header class="admin-header">
+      <div class="admin-brand">
+        <span class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
+        </span>
+        <span>云计算及算力网络 · 管理后台</span>
+      </div>
+      <div class="admin-actions">
+        <a href="./index.html" target="_blank">查看网站</a>
+        <a href="javascript:void(0)" class="btn-logout" onclick="AdminApp.handleLogout()">退出登录</a>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <!-- 侧边栏 -->
+      <aside class="admin-sidebar">
+        <div class="sidebar-section">内容管理</div>
+        <ul class="sidebar-menu">
+          <li><a href="javascript:void(0)" class="active" data-tab="dashboard" onclick="AdminApp.switchTab('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg><span>控制台</span>
+          </a></li>
+          <li><a href="javascript:void(0)" data-tab="news" onclick="AdminApp.switchTab('news')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg><span>新闻动态</span>
+          </a></li>
+          <li><a href="javascript:void(0)" data-tab="projects" onclick="AdminApp.switchTab('projects')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg><span>研发项目</span>
+          </a></li>
+          <li><a href="javascript:void(0)" data-tab="experts" onclick="AdminApp.switchTab('experts')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg><span>专家介绍</span>
+          </a></li>
+        </ul>
+        <div class="sidebar-section">系统</div>
+        <ul class="sidebar-menu">
+          <li><a href="javascript:void(0)" data-tab="settings" onclick="AdminApp.switchTab('settings')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg><span>数据管理</span>
+          </a></li>
+        </ul>
+      </aside>
+
+      <!-- 主内容 -->
+      <main class="admin-main">
+
+        <!-- ===== 控制台 ===== -->
+        <div class="tab-content" id="tab-dashboard">
+          <div class="admin-page-header">
+            <div>
+              <h2>控制台</h2>
+              <p class="page-desc">网站内容管理总览</p>
+            </div>
+          </div>
+          <div class="stats-cards">
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-news">0</div>
+                <div class="stat-name">新闻动态</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-projects">0</div>
+                <div class="stat-name">研发项目</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-experts">0</div>
+                <div class="stat-name">专家成员</div>
+              </div>
+            </div>
+          </div>
+          <div class="data-mgmt-section">
+            <h3>快捷操作</h3>
+            <p>选择下方快捷入口管理网站内容</p>
+            <div class="mgmt-actions">
+              <button class="btn-admin btn-admin-primary" onclick="AdminApp.switchTab('news')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                管理新闻
+              </button>
+              <button class="btn-admin btn-admin-success" onclick="AdminApp.switchTab('projects')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                管理项目
+              </button>
+              <button class="btn-admin btn-admin-outline" onclick="AdminApp.switchTab('experts')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                管理专家
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 新闻管理 ===== -->
+        <div class="tab-content" id="tab-news" style="display:none;">
+          <div class="admin-page-header">
+            <div>
+              <h2>新闻动态管理</h2>
+              <p class="page-desc">添加、编辑、删除新闻内容</p>
+            </div>
+            <button class="btn-admin btn-admin-primary" onclick="AdminApp.openNewsModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              添加新闻
+            </button>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>分类</th>
+                  <th>标题</th>
+                  <th>摘要</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="news-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ===== 项目管理 ===== -->
+        <div class="tab-content" id="tab-projects" style="display:none;">
+          <div class="admin-page-header">
+            <div>
+              <h2>研发项目管理</h2>
+              <p class="page-desc">添加、编辑、删除项目内容</p>
+            </div>
+            <button class="btn-admin btn-admin-primary" onclick="AdminApp.openProjectModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              添加项目
+            </button>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>状态</th>
+                  <th>分类</th>
+                  <th>标题</th>
+                  <th>标签</th>
+                  <th>摘要</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="projects-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ===== 专家管理 ===== -->
+        <div class="tab-content" id="tab-experts" style="display:none;">
+          <div class="admin-page-header">
+            <div>
+              <h2>专家介绍管理</h2>
+              <p class="page-desc">添加、编辑、删除专家信息</p>
+            </div>
+            <button class="btn-admin btn-admin-primary" onclick="AdminApp.openExpertModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              添加专家
+            </button>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>姓名</th>
+                  <th>职称</th>
+                  <th>简介</th>
+                  <th>研究方向</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="experts-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ===== 数据管理 ===== -->
+        <div class="tab-content" id="tab-settings" style="display:none;">
+          <div class="admin-page-header">
+            <div>
+              <h2>数据管理</h2>
+              <p class="page-desc">导出、导入、重置网站数据</p>
+            </div>
+          </div>
+
+          <div class="data-mgmt-section">
+            <h3>导出数据</h3>
+            <p>将所有新闻、项目、专家数据导出为 JSON 文件，用于备份或迁移。</p>
+            <div class="mgmt-actions">
+              <button class="btn-admin btn-admin-primary" onclick="AdminApp.handleExport()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                导出 JSON 文件
+              </button>
+            </div>
+          </div>
+
+          <div class="data-mgmt-section">
+            <h3>导入数据</h3>
+            <p>从 JSON 文件导入数据，将覆盖当前所有内容。</p>
+            <div class="mgmt-actions">
+              <input type="file" id="import-file" accept=".json" onchange="AdminApp.handleImport(event)">
+              <button class="btn-admin btn-admin-outline" onclick="document.getElementById('import-file').click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                选择 JSON 文件
+              </button>
+            </div>
+          </div>
+
+          <div class="data-mgmt-section" style="border-color: rgba(239,68,68,0.3);">
+            <h3 style="color:#EF4444;">重置数据</h3>
+            <p>将所有数据恢复为初始默认内容，此操作不可撤销。</p>
+            <div class="mgmt-actions">
+              <button class="btn-admin btn-admin-danger" onclick="AdminApp.handleReset()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                重置为默认数据
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ===== 新闻/项目 模态框 ===== -->
+  <div class="modal-overlay" id="modal-form">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">添加</h3>
+        <button class="modal-close" onclick="AdminApp.closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-admin btn-admin-outline" onclick="AdminApp.closeModal()">取消</button>
+        <button class="btn-admin btn-admin-primary" id="modal-save-btn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 确认删除弹窗 ===== -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal confirm-modal">
+      <div class="modal-body">
+        <div class="confirm-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <p>确认删除？</p>
+        <p class="confirm-sub" id="confirm-sub">此操作不可撤销</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-admin btn-admin-outline" onclick="AdminApp.closeConfirm()">取消</button>
+        <button class="btn-admin btn-admin-danger" id="confirm-delete-btn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast 提示 ===== -->
+  <div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:#1E293B;color:white;padding:12px 28px;border-radius:8px;font-size:0.9rem;z-index:2000;transition:transform 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.2);"></div>
+
+  <script src="./js/data.js"></script>
+  <script src="./js/admin.js"></script>
+</body>
+</html>
