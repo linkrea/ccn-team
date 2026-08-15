@@ -1,0 +1,146 @@
+{
+  "about": {
+    "title": "关于我们",
+    "subtitle": "引领云计算与算力网络技术创新",
+    "content": "我们是一支专注于云计算及算力网络领域的前沿技术研发团队，致力于构建高效、智能、安全的下一代网络基础设施。\n\n团队依托国家级重点实验室，在算力路由、边缘计算、云网融合等方向取得了系列原创性成果。我们秉承\"开放、协作、创新、卓越\"的理念，汇聚了一批来自国内外顶尖高校和企业的优秀人才。\n\n我们的使命是通过技术创新，推动算力成为像水电一样便捷可得的社会级服务，赋能千行百业的数字化转型。",
+    "stats": [
+      {
+        "label": "核心成员",
+        "value": "50+",
+        "icon": "fa-users"
+      },
+      {
+        "label": "科研项目",
+        "value": "120+",
+        "icon": "fa-flask"
+      },
+      {
+        "label": "发表论文",
+        "value": "300+",
+        "icon": "fa-file-alt"
+      },
+      {
+        "label": "专利授权",
+        "value": "80+",
+        "icon": "fa-certificate"
+      }
+    ]
+  },
+  "news": [
+    {
+      "id": 1,
+      "title": "我团队研究成果入选NSDI 2026",
+      "date": "2026-08-10",
+      "category": "学术成果",
+      "summary": "团队提出的\"算力感知路由协议\"被计算机网络顶级会议NSDI 2026录用为长文。",
+      "content": "该研究针对当前算力网络中资源调度效率低下的问题，提出了一种新型的算力感知路由协议，实现了计算任务与网络路径的协同优化。",
+      "image": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop"
+    },
+    {
+      "id": 2,
+      "title": "与华为云签署战略合作协议",
+      "date": "2026-07-22",
+      "category": "合作动态",
+      "summary": "双方将在算力网络、边缘智能等领域展开深度合作，共建联合实验室。",
+      "content": "今日，我团队与华为云正式签署战略合作协议，双方将围绕算力网络架构、边缘智能平台等方向开展联合攻关。",
+      "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop"
+    },
+    {
+      "id": 3,
+      "title": "算力网络试验网正式开通",
+      "date": "2026-06-15",
+      "category": "项目进展",
+      "summary": "覆盖京津冀、长三角、粤港澳的算力网络试验网完成部署并正式开通运行。",
+      "content": "经过两年的建设，算力网络试验网今日正式开通，实现了跨地域算力资源的统一调度与编排。",
+      "image": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=400&fit=crop"
+    }
+  ],
+  "team": [
+    {
+      "id": 1,
+      "name": "张明远",
+      "title": "团队负责人 / 首席科学家",
+      "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+      "bio": "国家杰出青年基金获得者，IEEE Fellow。长期从事云计算、算力网络研究，主持国家重点研发计划项目3项。",
+      "research": "算力网络架构、云网融合",
+      "email": "zhangmy@example.edu.cn"
+    },
+    {
+      "id": 2,
+      "name": "李思涵",
+      "title": "技术总监 / 教授",
+      "photo": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+      "bio": "博士生导师，CCF杰出会员。主要研究方向为边缘计算、分布式系统，在TON、JSAC等期刊发表论文50余篇。",
+      "research": "边缘计算、分布式系统",
+      "email": "lish@example.edu.cn"
+    },
+    {
+      "id": 3,
+      "name": "王浩然",
+      "title": "高级工程师",
+      "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+      "bio": "博士，专注于网络功能虚拟化与SDN技术研究，主导开发了多个开源网络虚拟化平台。",
+      "research": "NFV、SDN、网络虚拟化",
+      "email": "wanghr@example.edu.cn"
+    },
+    {
+      "id": 4,
+      "name": "陈雨薇",
+      "title": "青年研究员",
+      "photo": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
+      "bio": "博士，研究方向为AI驱动的网络资源调度。获ACM SIGCOMM最佳论文提名，主持国家自然科学基金青年项目。",
+      "research": "AI for Networking、资源调度",
+      "email": "chenyw@example.edu.cn"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "title": "算网融合操作系统",
+      "description": "研发面向算力网络的新一代网络操作系统，实现计算、存储、网络资源的统一调度与编排。",
+      "status": "进行中",
+      "progress": 75,
+      "leader": "张明远",
+      "startDate": "2024-01",
+      "endDate": "2027-12",
+      "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=400&fit=crop",
+      "tags": [
+        "操作系统",
+        "云原生",
+        "调度算法"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "边缘智能推理平台",
+      "description": "构建支持多模态大模型分布式推理的边缘计算平台，实现低延迟、高并发的AI推理服务。",
+      "status": "进行中",
+      "progress": 60,
+      "leader": "李思涵",
+      "startDate": "2025-03",
+      "endDate": "2026-12",
+      "image": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=400&fit=crop",
+      "tags": [
+        "边缘计算",
+        "AI推理",
+        "大模型"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "广域算力路由协议",
+      "description": "设计并实现新型算力感知路由协议，支持跨域算力资源的动态发现与最优路径计算。",
+      "status": "已完成",
+      "progress": 100,
+      "leader": "王浩然",
+      "startDate": "2023-06",
+      "endDate": "2025-06",
+      "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop",
+      "tags": [
+        "路由协议",
+        "广域网",
+        "算力调度"
+      ]
+    }
+  ]
+}
