@@ -107,22 +107,6 @@
         "AI推理",
         "大模型"
       ]
-    },
-    {
-      "id": 3,
-      "title": "广域算力路由协议",
-      "description": "设计并实现新型算力感知路由协议，支持跨域算力资源的动态发现与最优路径计算。",
-      "status": "已完成",
-      "progress": 100,
-      "leader": "王浩然",
-      "startDate": "2023-06",
-      "endDate": "2025-06",
-      "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop",
-      "tags": [
-        "路由协议",
-        "广域网",
-        "算力调度"
-      ]
     }
   ]
 }
