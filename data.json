@@ -91,22 +91,6 @@
         "云原生",
         "调度算法"
       ]
-    },
-    {
-      "id": 2,
-      "title": "边缘智能推理平台",
-      "description": "构建支持多模态大模型分布式推理的边缘计算平台，实现低延迟、高并发的AI推理服务。",
-      "status": "进行中",
-      "progress": 60,
-      "leader": "李思涵",
-      "startDate": "2025-03",
-      "endDate": "2026-12",
-      "image": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=400&fit=crop",
-      "tags": [
-        "边缘计算",
-        "AI推理",
-        "大模型"
-      ]
     }
   ]
 }
