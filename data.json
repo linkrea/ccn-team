@@ -64,15 +64,6 @@
       "bio": "博士，专注于网络功能虚拟化与SDN技术研究，主导开发了多个开源网络虚拟化平台。",
       "research": "NFV、SDN、网络虚拟化",
       "email": "wanghr@example.edu.cn"
-    },
-    {
-      "id": 4,
-      "name": "陈雨薇",
-      "title": "青年研究员",
-      "photo": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
-      "bio": "博士，研究方向为AI驱动的网络资源调度。获ACM SIGCOMM最佳论文提名，主持国家自然科学基金青年项目。",
-      "research": "AI for Networking、资源调度",
-      "email": "chenyw@example.edu.cn"
     }
   ],
   "projects": [
