@@ -10,7 +10,7 @@
 </head>
 <body>
 
-  <!-- ===== 登录页 ===== -->
+  <!-- ===== GitHub 配置页 ===== -->
   <div class="admin-login" id="login-page">
     <div class="login-box">
       <div class="login-logo">
@@ -19,13 +19,18 @@
         </svg>
       </div>
       <h1>后台管理系统</h1>
-      <p>云计算及算力网络 · 内容管理平台</p>
-      <div class="login-error" id="login-error">密码错误，请重试</div>
-      <input type="password" id="login-password" placeholder="请输入管理密码" autocomplete="off">
-      <button class="btn-admin btn-admin-primary" style="width:100%;justify-content:center;padding:12px;" onclick="AdminApp.handleLogin()">
-        登录
+      <p>云计算及算力网络 · GitHub 云端内容管理</p>
+      <div class="login-error" id="login-error"></div>
+      <input type="password" id="gh-token" placeholder="GitHub Personal Access Token" autocomplete="off">
+      <input type="text" id="gh-owner" placeholder="仓库所有者（用户名或组织名）" autocomplete="off">
+      <input type="text" id="gh-repo" placeholder="仓库名称" autocomplete="off">
+      <input type="text" id="gh-branch" placeholder="分支名称（默认 main）" value="main" autocomplete="off">
+      <button class="btn-admin btn-admin-primary" style="width:100%;justify-content:center;padding:12px;margin-top:4px;" onclick="AdminApp.handleLogin()">
+        连接 GitHub 并登录
       </button>
-      <div class="login-hint"></div>
+      <div class="login-hint">
+        需要在 GitHub 创建 Personal Access Token（Settings → Developer settings → Personal access tokens → Tokens (classic)），勾选 <strong>repo</strong> 权限。
+      </div>
     </div>
   </div>
 
@@ -43,6 +48,7 @@
         <span>云计算及算力网络 · 管理后台</span>
       </div>
       <div class="admin-actions">
+        <span id="sync-status" style="font-size:0.82rem;color:var(--text-light);"></span>
         <a href="./index.html" target="_blank">查看网站</a>
         <a href="javascript:void(0)" class="btn-logout" onclick="AdminApp.handleLogout()">退出登录</a>
       </div>
@@ -96,7 +102,7 @@
           <div class="admin-page-header">
             <div>
               <h2>控制台</h2>
-              <p class="page-desc">网站内容管理总览</p>
+              <p class="page-desc">网站内容管理总览 · 数据同步至 GitHub 云端</p>
             </div>
           </div>
           <div class="stats-cards">
@@ -137,7 +143,7 @@
           </div>
           <div class="data-mgmt-section">
             <h3>快捷操作</h3>
-            <p>选择下方快捷入口管理网站内容</p>
+            <p>选择下方快捷入口管理网站内容，修改后自动同步至 GitHub 云端</p>
             <div class="mgmt-actions">
               <button class="btn-admin btn-admin-primary" onclick="AdminApp.switchTab('news')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -160,7 +166,7 @@
           <div class="admin-page-header">
             <div>
               <h2>新闻动态管理</h2>
-              <p class="page-desc">添加、编辑、删除新闻内容</p>
+              <p class="page-desc">添加、编辑、删除新闻内容 · 保存后自动同步至 GitHub</p>
             </div>
             <button class="btn-admin btn-admin-primary" onclick="AdminApp.openNewsModal()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -188,7 +194,7 @@
           <div class="admin-page-header">
             <div>
               <h2>研发项目管理</h2>
-              <p class="page-desc">添加、编辑、删除项目内容</p>
+              <p class="page-desc">添加、编辑、删除项目内容 · 保存后自动同步至 GitHub</p>
             </div>
             <button class="btn-admin btn-admin-primary" onclick="AdminApp.openProjectModal()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -217,7 +223,7 @@
           <div class="admin-page-header">
             <div>
               <h2>专家介绍管理</h2>
-              <p class="page-desc">添加、编辑、删除专家信息</p>
+              <p class="page-desc">添加、编辑、删除专家信息 · 保存后自动同步至 GitHub</p>
             </div>
             <button class="btn-admin btn-admin-primary" onclick="AdminApp.openExpertModal()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -245,40 +251,25 @@
           <div class="admin-page-header">
             <div>
               <h2>数据管理</h2>
-              <p class="page-desc">导出、导入、重置网站数据</p>
+              <p class="page-desc">GitHub 连接信息与数据备份</p>
             </div>
           </div>
 
           <div class="data-mgmt-section">
-            <h3>导出数据</h3>
-            <p>将所有新闻、项目、专家数据导出为 JSON 文件，用于备份或迁移。</p>
+            <h3>GitHub 连接信息</h3>
+            <p id="gh-config-info" style="font-family:monospace;font-size:0.85rem;background:var(--bg-light);padding:12px 16px;border-radius:8px;"></p>
+            <div class="mgmt-actions">
+              <button class="btn-admin btn-admin-outline" onclick="AdminApp.handleLogout()">断开连接</button>
+            </div>
+          </div>
+
+          <div class="data-mgmt-section">
+            <h3>导出数据备份</h3>
+            <p>将当前所有内容导出为 JSON 文件，保存到本地作为备份。</p>
             <div class="mgmt-actions">
               <button class="btn-admin btn-admin-primary" onclick="AdminApp.handleExport()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 导出 JSON 文件
-              </button>
-            </div>
-          </div>
-
-          <div class="data-mgmt-section">
-            <h3>导入数据</h3>
-            <p>从 JSON 文件导入数据，将覆盖当前所有内容。</p>
-            <div class="mgmt-actions">
-              <input type="file" id="import-file" accept=".json" onchange="AdminApp.handleImport(event)">
-              <button class="btn-admin btn-admin-outline" onclick="document.getElementById('import-file').click()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                选择 JSON 文件
-              </button>
-            </div>
-          </div>
-
-          <div class="data-mgmt-section" style="border-color: rgba(239,68,68,0.3);">
-            <h3 style="color:#EF4444;">重置数据</h3>
-            <p>将所有数据恢复为初始默认内容，此操作不可撤销。</p>
-            <div class="mgmt-actions">
-              <button class="btn-admin btn-admin-danger" onclick="AdminApp.handleReset()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                重置为默认数据
               </button>
             </div>
           </div>

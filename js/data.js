@@ -1,308 +1,290 @@
 /**
- * 云计算及算力网络 - 数据管理层
- * 基于 localStorage 实现内容的增删改查
- * 支持数据导出/导入备份
+ * 云计算及算力网络 - GitHub API 数据管理层
+ * 通过 GitHub Contents API 读写 data/content.json
+ * 每次保存创建一个 Git commit，GitHub Pages 自动部署更新
  */
 
 var CCNData = (function () {
 
-  var STORAGE_KEYS = {
-    news: 'ccn_news',
-    projects: 'ccn_projects',
-    experts: 'ccn_experts',
-    auth: 'ccn_admin_auth'
-  };
+  var SESSION_KEY = 'ccn_github_config';
+  var FILE_PATH = 'data/content.json';
 
-  /* ===== 种子数据 ===== */
-  var SEED_NEWS = [
-    {
-      "id": "n001",
-      "category": "research",
-      "tag": "期刊论文",
-      "date": "2026-08-10",
-      "title": "发表核心期刊论文：基于闲时算力调度的算电协同方法与实践",
-      "summary": "算电协同：闲时算力如何成为新型电力系统的柔性资源？团队联合清华大学发表核心期刊论文。\n付智,郑博文,刘效辰,程伟等.基于闲时算力调度的算电协同方法与实践[J/OL].电力系统自动化,2026-07-09."
-    },
-    {
-      "id": "n004",
-      "category": "award",
-      "tag": "荣誉获奖",
-      "date": "2026-07-30",
-      "title": "团队荣获2025年度广东省科技进步奖二等奖",
-      "summary": "凭借\"超大规模云数据中心跨层资源管理关键技术及应用\"成果，团队荣获2025年度广东省科技进步奖二等奖"
-    }
-  ];
+  var config = null;
+  var cache = null; // { data: {...}, sha: '...' }
 
-  var SEED_PROJECTS = [
-    {
-      "id": "p001",
-      "category": "network",
-      "status": "研发中",
-      "title": "基于星罗的粤港澳大湾区异构算力任务编排协同系统研究及应用",
-      "tags": [
-        "集团核心攻关项目",
-        "算力调度"
-      ],
-      "summary": "构建基于\"星罗\"算力平台的跨域任务编排系统，实现异构算力资源的统一纳管与智能调度。"
-    },
-       {
-      "id": "p002",
-      "category": "network",
-      "status": "研发中",
-      "title": "异构算力跨域任务编排系统",
-      "tags": [
-        "工信部算力强基揭榜挂帅项目"
-      ],
-      "summary": "聚焦国产算力适配、跨域调度与绿色网络三大方向。"
-    }
+  /* ===== GitHub 配置管理 ===== */
 
-  ];
+  function setConfig(token, owner, repo, branch) {
+    config = {
+      token: token,
+      owner: owner,
+      repo: repo,
+      branch: branch || 'main'
+    };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(config));
+  }
 
-  var SEED_EXPERTS = [
-    {
-      "id": "e001",
-      "name": "程伟",
-      "initial": "程",
-      "title": "领域带头人",
-      "desc": "博士，正高级工程师。中国联通广东省分公司智算运营中心总经理，中国联通云计算首席专家。IEEE PES电力系统通信与网络安全技术委员会（中国）电碳算协同技术分委会副主席、数字广东建设专家委员会专家。",
-      "tags": [
-        "云计算",
-        "智算",
-        "数据中心"
-      ]
-    },
-    {
-      "id": "e002",
-      "name": "刘惜吾",
-      "initial": "刘",
-      "title": "算力网络专业带头人",
-      "desc": "负责算力网络关键技术研发，涵盖新型算力基础设施、超节点技术、广域异构算网一体化调度、跨境算网一体化、跨境数据合规传输、算电协同、绿色算电等技术领域",
-      "tags": [
-        "算力网络",
-        "Token运营"
-      ]
-    },
-    {
-      "id": "e003",
-      "name": "曾楚轩",
-      "initial": "曾",
-      "title": "算力平台专业带头人",
-      "desc": "负责算力网络平台及产品化研发，涵盖算力标识、算力监测、算力交易及服务平台研发，打造电商化算网一体化平台，提供开箱即用的算网服务产品",
-      "tags": [
-        "智能调度",
-        "算力平台"
-      ]
-    }
-  ];
-
-  /* ===== 工具函数 ===== */
-  function read(key, seed) {
-    var raw = localStorage.getItem(key);
+  function loadConfig() {
+    var raw = sessionStorage.getItem(SESSION_KEY);
     if (raw) {
       try {
-        return JSON.parse(raw);
+        config = JSON.parse(raw);
+        return true;
       } catch (e) {
-        // 数据损坏，重新初始化
+        config = null;
       }
     }
-    localStorage.setItem(key, JSON.stringify(seed));
-    return seed.slice();
+    return false;
   }
 
-  function write(key, data) {
-    localStorage.setItem(key, JSON.stringify(data));
+  function isConfigured() {
+    if (!config) loadConfig();
+    return !!(config && config.token && config.owner && config.repo);
   }
+
+  function clearConfig() {
+    config = null;
+    cache = null;
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  function getConfig() {
+    if (!config) loadConfig();
+    return config;
+  }
+
+  /* ===== GitHub API ===== */
+
+  function apiUrl() {
+    var c = getConfig();
+    return 'https://api.github.com/repos/' + c.owner + '/' + c.repo + '/contents/' + FILE_PATH + '?ref=' + c.branch;
+  }
+
+  function apiHeaders() {
+    var c = getConfig();
+    return {
+      'Authorization': 'Bearer ' + c.token,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+  }
+
+  /**
+   * 从 GitHub 拉取 content.json
+   * 返回 Promise<data>
+   */
+  function fetchData() {
+    return fetch(apiUrl(), { headers: apiHeaders() })
+      .then(function (res) {
+        if (res.status === 404) {
+          throw new Error('文件 data/content.json 不存在，请先在仓库中创建该文件');
+        }
+        if (res.status === 401) {
+          throw new Error('Token 无效或已过期，请重新输入');
+        }
+        if (res.status === 403) {
+          throw new Error('权限不足，请确保 Token 有 repo 权限');
+        }
+        if (!res.ok) {
+          throw new Error('GitHub API 错误: ' + res.status);
+        }
+        return res.json();
+      })
+      .then(function (fileInfo) {
+        var content = decodeURIComponent(escape(atob(fileInfo.content.replace(/\n/g, ''))));
+        var data = JSON.parse(content);
+        cache = { data: data, sha: fileInfo.sha };
+        return data;
+      });
+  }
+
+  /**
+   * 将当前内存中的数据保存到 GitHub
+   * 返回 Promise<data>
+   */
+  function commitData(message) {
+    if (!cache) {
+      return Promise.reject(new Error('数据未加载，请先调用 fetchData()'));
+    }
+
+    var content = btoa(unescape(encodeURIComponent(JSON.stringify(cache.data, null, 2))));
+    var body = {
+      message: message || '更新网站内容',
+      content: content,
+      branch: config.branch,
+      sha: cache.sha
+    };
+
+    return fetch(apiUrl(), {
+      method: 'PUT',
+      headers: apiHeaders(),
+      body: JSON.stringify(body)
+    })
+      .then(function (res) {
+        if (res.status === 409) {
+          throw new Error('文件已被其他人修改，请刷新后重试');
+        }
+        if (res.status === 401) {
+          throw new Error('Token 无效或已过期');
+        }
+        if (res.status === 403) {
+          throw new Error('权限不足或触发 GitHub 限流，请稍后重试');
+        }
+        if (!res.ok) {
+          throw new Error('保存失败: HTTP ' + res.status);
+        }
+        return res.json();
+      })
+      .then(function (result) {
+        cache.sha = result.content.sha;
+        return cache.data;
+      });
+  }
+
+  /* ===== 工具函数 ===== */
 
   function genId(prefix) {
     return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
 
-  /* ===== 公共 API ===== */
-
-  // 初始化（如果 localStorage 为空则写入种子数据）
-  function init() {
-    read(STORAGE_KEYS.news, SEED_NEWS);
-    read(STORAGE_KEYS.projects, SEED_PROJECTS);
-    read(STORAGE_KEYS.experts, SEED_EXPERTS);
+  function parseTags(str) {
+    if (Array.isArray(str)) return str;
+    if (typeof str === 'string') {
+      return str.split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean);
+    }
+    return [];
   }
 
-  // 重置为默认数据
-  function resetAll() {
-    write(STORAGE_KEYS.news, SEED_NEWS);
-    write(STORAGE_KEYS.projects, SEED_PROJECTS);
-    write(STORAGE_KEYS.experts, SEED_EXPERTS);
+  /* ===== 数据访问 ===== */
+
+  function getData() {
+    return cache ? cache.data : null;
   }
 
-  /* --- 新闻 --- */
   function getNews() {
-    return read(STORAGE_KEYS.news, SEED_NEWS);
+    return cache ? (cache.data.news || []) : [];
   }
+
+  function getProjects() {
+    return cache ? (cache.data.projects || []) : [];
+  }
+
+  function getExperts() {
+    return cache ? (cache.data.experts || []) : [];
+  }
+
+  /* ===== 新闻 CRUD ===== */
 
   function addNews(item) {
-    var list = getNews();
     item.id = genId('n');
     item.date = item.date || new Date().toISOString().slice(0, 10);
-    list.unshift(item);
-    write(STORAGE_KEYS.news, list);
+    cache.data.news.unshift(item);
     return item;
   }
 
   function updateNews(id, updates) {
-    var list = getNews();
+    var list = cache.data.news;
     var idx = list.findIndex(function (n) { return n.id === id; });
     if (idx >= 0) {
       list[idx] = Object.assign(list[idx], updates);
-      write(STORAGE_KEYS.news, list);
       return list[idx];
     }
     return null;
   }
 
   function deleteNews(id) {
-    var list = getNews().filter(function (n) { return n.id !== id; });
-    write(STORAGE_KEYS.news, list);
+    cache.data.news = cache.data.news.filter(function (n) { return n.id !== id; });
   }
 
-  /* --- 项目 --- */
-  function getProjects() {
-    return read(STORAGE_KEYS.projects, SEED_PROJECTS);
-  }
+  /* ===== 项目 CRUD ===== */
 
   function addProject(item) {
-    var list = getProjects();
     item.id = genId('p');
-    if (typeof item.tags === 'string') {
-      item.tags = item.tags.split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean);
-    }
-    list.unshift(item);
-    write(STORAGE_KEYS.projects, list);
+    item.tags = parseTags(item.tags);
+    cache.data.projects.unshift(item);
     return item;
   }
 
   function updateProject(id, updates) {
-    var list = getProjects();
+    var list = cache.data.projects;
     var idx = list.findIndex(function (p) { return p.id === id; });
     if (idx >= 0) {
-      if (updates.tags && typeof updates.tags === 'string') {
-        updates.tags = updates.tags.split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean);
-      }
+      if (updates.tags) updates.tags = parseTags(updates.tags);
       list[idx] = Object.assign(list[idx], updates);
-      write(STORAGE_KEYS.projects, list);
       return list[idx];
     }
     return null;
   }
 
   function deleteProject(id) {
-    var list = getProjects().filter(function (p) { return p.id !== id; });
-    write(STORAGE_KEYS.projects, list);
+    cache.data.projects = cache.data.projects.filter(function (p) { return p.id !== id; });
   }
 
-  /* --- 专家 --- */
-  function getExperts() {
-    return read(STORAGE_KEYS.experts, SEED_EXPERTS);
-  }
+  /* ===== 专家 CRUD ===== */
 
   function addExpert(item) {
-    var list = getExperts();
     item.id = genId('e');
     item.initial = item.name ? item.name.charAt(0) : '?';
-    if (typeof item.tags === 'string') {
-      item.tags = item.tags.split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean);
-    }
-    list.push(item);
-    write(STORAGE_KEYS.experts, list);
+    item.tags = parseTags(item.tags);
+    cache.data.experts.push(item);
     return item;
   }
 
   function updateExpert(id, updates) {
-    var list = getExperts();
+    var list = cache.data.experts;
     var idx = list.findIndex(function (e) { return e.id === id; });
     if (idx >= 0) {
-      if (updates.name) {
-        updates.initial = updates.name.charAt(0);
-      }
-      if (updates.tags && typeof updates.tags === 'string') {
-        updates.tags = updates.tags.split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean);
-      }
+      if (updates.name) updates.initial = updates.name.charAt(0);
+      if (updates.tags) updates.tags = parseTags(updates.tags);
       list[idx] = Object.assign(list[idx], updates);
-      write(STORAGE_KEYS.experts, list);
       return list[idx];
     }
     return null;
   }
 
   function deleteExpert(id) {
-    var list = getExperts().filter(function (e) { return e.id !== id; });
-    write(STORAGE_KEYS.experts, list);
+    cache.data.experts = cache.data.experts.filter(function (e) { return e.id !== id; });
   }
 
-  /* --- 认证（简单客户端密码） --- */
-  var ADMIN_PASSWORD = 'admin123';
+  /* ===== 导出（用于下载备份） ===== */
 
-  function login(password) {
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem(STORAGE_KEYS.auth, '1');
-      return true;
-    }
-    return false;
-  }
-
-  function logout() {
-    sessionStorage.removeItem(STORAGE_KEYS.auth);
-  }
-
-  function isLoggedIn() {
-    return sessionStorage.getItem(STORAGE_KEYS.auth) === '1';
-  }
-
-  /* --- 导出/导入 --- */
   function exportData() {
+    if (!cache) return '{}';
     return JSON.stringify({
-      news: getNews(),
-      projects: getProjects(),
-      experts: getExperts(),
+      news: cache.data.news,
+      projects: cache.data.projects,
+      experts: cache.data.experts,
       exportedAt: new Date().toISOString()
     }, null, 2);
   }
 
-  function importData(jsonStr) {
-    var data = JSON.parse(jsonStr);
-    if (data.news) write(STORAGE_KEYS.news, data.news);
-    if (data.projects) write(STORAGE_KEYS.projects, data.projects);
-    if (data.experts) write(STORAGE_KEYS.experts, data.experts);
-  }
-
   return {
-    init: init,
-    resetAll: resetAll,
-    STORAGE_KEYS: STORAGE_KEYS,
+    setConfig: setConfig,
+    loadConfig: loadConfig,
+    isConfigured: isConfigured,
+    clearConfig: clearConfig,
+    getConfig: getConfig,
 
-    // 新闻
+    fetchData: fetchData,
+    commitData: commitData,
+
+    getData: getData,
     getNews: getNews,
+    getProjects: getProjects,
+    getExperts: getExperts,
+
     addNews: addNews,
     updateNews: updateNews,
     deleteNews: deleteNews,
 
-    // 项目
-    getProjects: getProjects,
     addProject: addProject,
     updateProject: updateProject,
     deleteProject: deleteProject,
 
-    // 专家
-    getExperts: getExperts,
     addExpert: addExpert,
     updateExpert: updateExpert,
     deleteExpert: deleteExpert,
 
-    // 认证
-    login: login,
-    logout: logout,
-    isLoggedIn: isLoggedIn,
-
-    // 导入导出
-    exportData: exportData,
-    importData: importData
+    exportData: exportData
   };
 })();

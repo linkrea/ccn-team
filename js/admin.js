@@ -1,39 +1,62 @@
 /**
  * 云计算及算力网络 - 后台管理逻辑
+ * 基于 GitHub Contents API，所有修改自动提交到 GitHub 云端
  */
 
 var AdminApp = (function () {
 
   var currentTab = 'dashboard';
-  var editMode = null; // 'news' | 'projects' | 'experts'
+  var editMode = null;
   var editId = null;
   var confirmCallback = null;
 
-  /* ===== 登录 ===== */
+  /* ===== 登录（连接 GitHub） ===== */
   function handleLogin() {
-    var password = document.getElementById('login-password').value;
-    if (CCNData.login(password)) {
-      showAdmin();
-    } else {
-      var err = document.getElementById('login-error');
-      err.classList.add('show');
-      document.getElementById('login-password').value = '';
-      setTimeout(function () { err.classList.remove('show'); }, 3000);
+    var token = document.getElementById('gh-token').value.trim();
+    var owner = document.getElementById('gh-owner').value.trim();
+    var repo = document.getElementById('gh-repo').value.trim();
+    var branch = document.getElementById('gh-branch').value.trim() || 'main';
+
+    if (!token || !owner || !repo) {
+      showLoginError('请填写 Token、仓库所有者和仓库名称');
+      return;
     }
+
+    setSyncStatus('正在连接 GitHub...');
+    CCNData.setConfig(token, owner, repo, branch);
+
+    CCNData.fetchData()
+      .then(function () {
+        showAdmin();
+      })
+      .catch(function (err) {
+        showLoginError(err.message || '连接失败，请检查配置');
+        CCNData.clearConfig();
+        setSyncStatus('');
+      });
+  }
+
+  function showLoginError(msg) {
+    var err = document.getElementById('login-error');
+    err.textContent = msg;
+    err.classList.add('show');
+    setTimeout(function () { err.classList.remove('show'); }, 5000);
   }
 
   function handleLogout() {
-    CCNData.logout();
+    CCNData.clearConfig();
     document.getElementById('admin-app').style.display = 'none';
     document.getElementById('login-page').style.display = 'flex';
-    document.getElementById('login-password').value = '';
+    document.getElementById('gh-token').value = '';
+    setSyncStatus('');
   }
 
   function showAdmin() {
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('admin-app').style.display = 'block';
-    CCNData.init();
+    setSyncStatus('已连接');
     renderDashboard();
+    renderConfigInfo();
   }
 
   /* ===== Tab 切换 ===== */
@@ -62,6 +85,54 @@ var AdminApp = (function () {
     document.getElementById('stat-news').textContent = CCNData.getNews().length;
     document.getElementById('stat-projects').textContent = CCNData.getProjects().length;
     document.getElementById('stat-experts').textContent = CCNData.getExperts().length;
+  }
+
+  function renderConfigInfo() {
+    var c = CCNData.getConfig();
+    if (!c) return;
+    var el = document.getElementById('gh-config-info');
+    if (el) {
+      el.textContent = '仓库: ' + c.owner + '/' + c.repo + '  |  分支: ' + c.branch;
+    }
+  }
+
+  /* ===== GitHub 同步状态 ===== */
+  function setSyncStatus(status) {
+    var el = document.getElementById('sync-status');
+    if (el) el.textContent = status;
+  }
+
+  function syncStart() {
+    setSyncStatus('正在同步...');
+  }
+
+  function syncDone() {
+    setSyncStatus('已同步 ' + new Date().toLocaleTimeString());
+  }
+
+  function syncError(msg) {
+    setSyncStatus('同步失败');
+    showToast(msg || '同步失败，请重试', 'error');
+  }
+
+  /**
+   * 通用：执行操作 → 提交到 GitHub → 刷新表格
+   */
+  function commitAndRefresh(message, refreshFn) {
+    syncStart();
+    CCNData.commitData(message)
+      .then(function () {
+        syncDone();
+        showToast('已保存并同步至 GitHub');
+        if (refreshFn) refreshFn();
+      })
+      .catch(function (err) {
+        syncError(err.message);
+        // 同步失败，重新拉取数据以恢复一致状态
+        CCNData.fetchData().then(function () {
+          if (refreshFn) refreshFn();
+        });
+      });
   }
 
   /* ===== 新闻管理 ===== */
@@ -144,15 +215,16 @@ var AdminApp = (function () {
     var tagMap = { research: '科研成果', activity: '团队活动', project: '项目进展', award: '荣誉获奖' };
     var data = { date: date, category: category, tag: tag || tagMap[category], title: title, summary: summary };
 
+    var msg;
     if (editId) {
       CCNData.updateNews(editId, data);
-      showToast('新闻已更新');
+      msg = '编辑新闻: ' + title;
     } else {
       CCNData.addNews(data);
-      showToast('新闻已添加');
+      msg = '添加新闻: ' + title;
     }
     closeModal();
-    renderNewsTable();
+    commitAndRefresh(msg, renderNewsTable);
   }
 
   /* ===== 项目管理 ===== */
@@ -242,16 +314,16 @@ var AdminApp = (function () {
     }
 
     var data = { category: category, status: status, title: title, tags: tags, summary: summary };
-
+    var msg;
     if (editId) {
       CCNData.updateProject(editId, data);
-      showToast('项目已更新');
+      msg = '编辑项目: ' + title;
     } else {
       CCNData.addProject(data);
-      showToast('项目已添加');
+      msg = '添加项目: ' + title;
     }
     closeModal();
-    renderProjectsTable();
+    commitAndRefresh(msg, renderProjectsTable);
   }
 
   /* ===== 专家管理 ===== */
@@ -323,27 +395,43 @@ var AdminApp = (function () {
     }
 
     var data = { name: name, title: title, desc: desc, tags: tags };
-
+    var msg;
     if (editId) {
       CCNData.updateExpert(editId, data);
-      showToast('专家信息已更新');
+      msg = '编辑专家: ' + name;
     } else {
       CCNData.addExpert(data);
-      showToast('专家已添加');
+      msg = '添加专家: ' + name;
     }
     closeModal();
-    renderExpertsTable();
+    commitAndRefresh(msg, renderExpertsTable);
   }
 
   /* ===== 删除确认 ===== */
   function confirmDelete(type, id, name) {
     document.getElementById('confirm-sub').textContent = '将永久删除「' + name + '」';
     confirmCallback = function () {
-      if (type === 'news') { CCNData.deleteNews(id); renderNewsTable(); }
-      if (type === 'projects') { CCNData.deleteProject(id); renderProjectsTable(); }
-      if (type === 'experts') { CCNData.deleteExpert(id); renderExpertsTable(); }
       closeConfirm();
-      showToast('已删除');
+      var msg;
+      if (type === 'news') {
+        CCNData.deleteNews(id);
+        msg = '删除新闻: ' + name;
+      }
+      if (type === 'projects') {
+        CCNData.deleteProject(id);
+        msg = '删除项目: ' + name;
+      }
+      if (type === 'experts') {
+        CCNData.deleteExpert(id);
+        msg = '删除专家: ' + name;
+      }
+
+      var refreshFn = null;
+      if (type === 'news') refreshFn = renderNewsTable;
+      if (type === 'projects') refreshFn = renderProjectsTable;
+      if (type === 'experts') refreshFn = renderExpertsTable;
+
+      commitAndRefresh(msg, refreshFn);
     };
     document.getElementById('confirm-delete-btn').onclick = confirmCallback;
     document.getElementById('modal-confirm').classList.add('show');
@@ -361,7 +449,7 @@ var AdminApp = (function () {
     editId = null;
   }
 
-  /* ===== 导出/导入/重置 ===== */
+  /* ===== 导出备份 ===== */
   function handleExport() {
     var data = CCNData.exportData();
     var blob = new Blob([data], { type: 'application/json' });
@@ -374,41 +462,6 @@ var AdminApp = (function () {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showToast('数据已导出');
-  }
-
-  function handleImport(event) {
-    var file = event.target.files[0];
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      try {
-        CCNData.importData(e.target.result);
-        showToast('数据导入成功');
-        renderDashboard();
-        if (currentTab === 'news') renderNewsTable();
-        if (currentTab === 'projects') renderProjectsTable();
-        if (currentTab === 'experts') renderExpertsTable();
-      } catch (err) {
-        showToast('导入失败：文件格式错误', 'error');
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  }
-
-  function handleReset() {
-    confirmCallback = function () {
-      CCNData.resetAll();
-      closeConfirm();
-      showToast('数据已重置为默认');
-      renderDashboard();
-      if (currentTab === 'news') renderNewsTable();
-      if (currentTab === 'projects') renderProjectsTable();
-      if (currentTab === 'experts') renderExpertsTable();
-    };
-    document.getElementById('confirm-sub').textContent = '所有数据将恢复为初始默认内容';
-    document.getElementById('confirm-delete-btn').onclick = confirmCallback;
-    document.getElementById('modal-confirm').classList.add('show');
   }
 
   /* ===== Toast ===== */
@@ -439,13 +492,21 @@ var AdminApp = (function () {
 
   /* ===== 初始化 ===== */
   function init() {
-    CCNData.init();
-    if (CCNData.isLoggedIn()) {
-      showAdmin();
+    // 如果已有配置（sessionStorage），自动尝试连接
+    if (CCNData.isConfigured()) {
+      setSyncStatus('正在连接 GitHub...');
+      CCNData.fetchData()
+        .then(function () {
+          showAdmin();
+        })
+        .catch(function () {
+          CCNData.clearConfig();
+          setSyncStatus('');
+        });
     }
 
     // 回车登录
-    document.getElementById('login-password').addEventListener('keypress', function (e) {
+    document.getElementById('gh-branch').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') handleLogin();
     });
 
@@ -469,9 +530,7 @@ var AdminApp = (function () {
     confirmDelete: confirmDelete,
     closeConfirm: closeConfirm,
     closeModal: closeModal,
-    handleExport: handleExport,
-    handleImport: handleImport,
-    handleReset: handleReset
+    handleExport: handleExport
   };
 })();
 

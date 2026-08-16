@@ -2,7 +2,7 @@
 
 > 算力网络，连通梦想
 
-团队风采展示网站，包含首页、关于我们、新闻动态、研发项目、专家介绍五个页面，并配备后台管理系统（支持内容增删改查）。纯静态网站，无需构建工具，上传到 GitHub 仓库后即可通过 GitHub Pages 直接访问。
+团队风采展示网站，包含首页、关于我们、新闻动态、研发项目、专家介绍五个页面，并配备后台管理系统（基于 GitHub API，支持内容增删改查）。纯静态网站，无需构建工具，上传到 GitHub 仓库后即可通过 GitHub Pages 直接访问。
 
 ## 项目结构
 
@@ -18,10 +18,12 @@ cloud-computing-network/
 │   ├── style.css       # 全局样式表
 │   └── admin.css       # 后台管理样式
 ├── js/
-│   ├── data.js         # 数据管理（localStorage CRUD）
-│   ├── render.js       # 前台页面动态渲染
+│   ├── data.js         # GitHub API 数据管理层
+│   ├── render.js       # 前台页面动态渲染（异步加载 content.json）
 │   ├── main.js         # 前台交互脚本
 │   └── admin.js        # 后台管理逻辑
+├── data/
+│   └── content.json    # 网站内容数据（新闻/项目/专家）
 ├── assets/             # 静态资源目录
 └── README.md           # 项目说明
 ```
@@ -33,24 +35,39 @@ cloud-computing-network/
 - **零依赖**：不依赖任何外部 CDN 或框架，所有资源本地加载
 - **内联图标**：使用 SVG 内联图标，无需加载图标字体库
 - **动画效果**：滚动渐入动画、数字统计动画、卡片悬浮效果
-- **后台管理**：内置内容管理系统，支持新闻/项目/专家的增删改查
-- **数据持久化**：基于浏览器 localStorage，无需服务器即可保存内容修改
-- **数据备份**：支持 JSON 格式导出/导入，方便数据迁移和备份
+- **GitHub 云端管理**：后台通过 GitHub Contents API 直接读写仓库中的 `data/content.json`，每次修改自动创建 Git commit，GitHub Pages 自动部署更新
+- **数据备份**：支持 JSON 格式导出，方便数据备份
 - **GitHub Pages 兼容**：所有路径使用相对路径，支持子路径部署
 
 ## 后台管理系统
 
-网站内置后台管理页面，可在浏览器中直接管理新闻、项目、专家等内容。
+网站内置后台管理页面，通过 GitHub API 直接管理仓库中的内容数据。
 
 ### 访问方式
 
 在浏览器中打开 `admin.html`，或点击网站页脚的"后台管理"链接。
 
-### 默认密码
+### 登录配置
 
-```
-admin123
-```
+登录时需要填写以下信息：
+
+| 字段 | 说明 |
+|------|------|
+| **GitHub Token** | Personal Access Token，需勾选 `repo` 权限 |
+| **仓库所有者** | GitHub 用户名或组织名 |
+| **仓库名称** | 仓库名（如 `cloud-computing-network`） |
+| **分支名称** | 默认 `main`，可改为其他分支 |
+
+**创建 Token 的步骤：**
+
+1. 登录 GitHub → 点击右上角头像 → `Settings`
+2. 左侧菜单最底部 → `Developer settings`
+3. `Personal access tokens` → `Tokens (classic)`
+4. 点击 `Generate new token (classic)`
+5. 填写 Note（如"网站管理"），勾选 **repo** 权限
+6. 点击 `Generate token`，复制生成的 Token
+
+> **安全提示**：Token 仅存储在浏览器的 `sessionStorage` 中，关闭浏览器后自动清除。不会上传到任何第三方服务器。
 
 ### 功能说明
 
@@ -60,14 +77,15 @@ admin123
 | 新闻动态 | 添加、编辑、删除新闻（支持分类、日期、标题、摘要） |
 | 研发项目 | 添加、编辑、删除项目（支持分类、状态、标签、简介） |
 | 专家介绍 | 添加、编辑、删除专家（支持姓名、职称、简介、研究方向） |
-| 数据管理 | 导出 JSON 备份、导入 JSON 恢复、重置为默认数据 |
+| 数据管理 | 查看 GitHub 连接信息、导出 JSON 备份 |
 
-### 数据存储说明
+### 数据同步机制
 
-- 内容数据存储在浏览器的 `localStorage` 中，不同浏览器/设备之间数据独立
-- 在后台修改内容后，前台页面刷新即可看到更新
-- 使用"导出数据"功能可备份当前所有内容，更换浏览器后可通过"导入数据"恢复
-- 点击"重置数据"可将所有内容恢复为初始默认值
+- 所有内容数据存储在仓库的 `data/content.json` 文件中
+- 前台页面直接通过 `fetch` 加载该静态 JSON 文件
+- 后台每次增删改操作自动通过 GitHub API 提交一次 commit
+- GitHub Pages 检测到仓库更新后自动重新部署（通常 1-2 分钟）
+- 所有设备访问的是同一份数据，实现真正的云端同步
 
 ## 部署到 GitHub Pages
 
@@ -109,6 +127,13 @@ git push origin main
 # 7. 在 GitHub 仓库 Settings → Pages 中启用 Pages 服务
 ```
 
+### 部署后使用后台管理
+
+1. 部署完成后，访问 `https://<你的用户名>.github.io/cloud-computing-network/admin.html`
+2. 输入 GitHub Token、仓库所有者、仓库名称、分支名称
+3. 连接成功后即可在浏览器中管理新闻、项目、专家内容
+4. 每次保存自动同步到 GitHub，1-2 分钟后前台页面更新
+
 ### 注意事项
 
 - 如果仓库名为 `<用户名>.github.io`，则网站直接通过 `https://<用户名>.github.io/` 访问
@@ -118,7 +143,7 @@ git push origin main
 
 ## 本地预览
 
-无需服务器，直接用浏览器打开 `index.html` 即可预览。
+无需服务器，直接用浏览器打开 `index.html` 即可预览前台页面。
 
 如需通过本地服务器预览：
 
@@ -131,6 +156,8 @@ npx serve .
 ```
 
 然后访问 `http://localhost:8080`
+
+> **注意**：后台管理页面（admin.html）需要仓库已推送到 GitHub 后才能使用，因为它通过 GitHub API 读写数据。
 
 ## 自定义内容
 
@@ -151,9 +178,9 @@ npx serve .
 }
 ```
 
-### 添加新闻/项目
+### 直接编辑数据文件
 
-复制对应的卡片 HTML 结构，修改内容即可。在 `news.html` 或 `projects.html` 中找到现有的卡片，复制并修改文本。
+也可以直接编辑 `data/content.json` 来修改新闻、项目、专家内容，提交到 GitHub 后前台自动更新。
 
 ## 浏览器兼容
 
